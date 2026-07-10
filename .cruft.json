@@ -1,0 +1,33 @@
+{
+  "template": "https://github.com/statisticsnorway/ssb-pypitemplate.git",
+  "commit": "57b7b713c78245687a1d5421aba8bf01bead2245",
+  "checkout": "2026.5.27",
+  "context": {
+    "cookiecutter": {
+      "project_name": "ssb-nr-utils",
+      "package_name": "nr_utils",
+      "friendly_name": "SSB Nr Utils",
+      "copyright_owner": "Statistics Norway",
+      "copyright_year": "2026",
+      "author": "Edvard Garmannslund",
+      "email": "ged@ssb.no",
+      "github_organization": "statisticsnorway",
+      "version": "0.0.0",
+      "license": "MIT",
+      "development_status": "Development Status :: 1 - Planning",
+      "code_quality_level": "Low",
+      "dependency_manager_tool": "uv",
+      "department_number": "210",
+      "_copy_without_render": [
+        "*.rst_t"
+      ],
+      "_jinja2_env_vars": {
+        "lstrip_blocks": true,
+        "trim_blocks": true
+      },
+      "_template": "https://github.com/statisticsnorway/ssb-pypitemplate.git",
+      "_commit": "57b7b713c78245687a1d5421aba8bf01bead2245"
+    }
+  },
+  "directory": null
+}
