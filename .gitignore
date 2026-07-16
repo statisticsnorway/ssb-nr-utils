@@ -175,3 +175,4 @@ __marimo__/
 /docs/_build/
 *.rej
 *.orig
+src/nr_utils/sesongjustering/out
