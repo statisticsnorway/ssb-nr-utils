@@ -78,6 +78,32 @@ def _insert_data(spec_text: str, data_line: str) -> str:
     return SERIES_BLOCK_PATTERN.sub(lambda m: f"{m.group(1)}\n{data_line}", spec_text, count=1)
 
 
+def _read_saved_series(path: Path) -> pd.Series:
+    df = pd.read_csv(
+        path,
+        sep=r"\s+",
+        skiprows=2,           # skip header row + dashed separator
+        header=None,
+        names=["date", "value"],
+        dtype={"date": str},
+    )
+
+    # date can be yyyymm (monthly) or yyyyq (quarterly, 5 digits)
+    if df["date"].str.len().iloc[0] == 6:
+        idx = pd.to_datetime(df["date"], format="%Y%m")
+    elif df["date"].str.len().iloc[0] == 5:
+        years = df["date"].str[:4].astype(int)
+        quarters = df["date"].str[4].astype(int)
+        idx = pd.PeriodIndex(
+            [f"{y}Q{q}" for y, q in zip(years, quarters)], freq="Q"
+        ).to_timestamp()
+    else:
+        raise ValueError(f"Unrecognized date format in {path}: {df['date'].iloc[0]!r}")
+
+    values = df["value"].astype(float)
+    return pd.Series(values.values, index=idx)
+
+
 def _call_x13_from_df(df: pd.DataFrame, spec_folder:str, out_prefix:str,x13_bin:str) -> pd.DataFrame:
 
 
@@ -101,12 +127,13 @@ def _call_x13_from_df(df: pd.DataFrame, spec_folder:str, out_prefix:str,x13_bin:
             spec_path.write_text(original_text)
         
         
-        all_series[f"{col}_seasadj"] = result["seasadj"]
-        all_series[f"{col}_trend"] = result["trend"]
-        all_series[f"{col}_irregular"] = result["irregular"]
+        all_series[f"{col}_seasadj"] = _read_saved_series(f"{out_prefix}/{col}.d11")
+        all_series[f"{col}_trend"] = _read_saved_series(f"{out_prefix}/{col}.d12")
+        all_series[f"{col}_irregular"] = _read_saved_series(f"{out_prefix}/{col}.d13")
 
     return pd.concat(all_series, axis=1)
 
+    
 def run_x13_from_df(df: pd.DataFrame, spec_folder: str, series: str = "x13", hmtl: bool = False, outdir: str = None):
     """Function to run the x13 binary file.
     
@@ -130,10 +157,10 @@ def run_x13_from_df(df: pd.DataFrame, spec_folder: str, series: str = "x13", hmt
             tmpdir = Path(tmpdir)
             out_prefix = tmpdir
     
-            _call_x13_from_df(df=df, spec_folder=spec_folder,out_prefix=out_prefix,x13_bin=x13_bin)
+            df_seasonal = _call_x13_from_df(df=df, spec_folder=spec_folder,out_prefix=out_prefix,x13_bin=x13_bin)
             
     else:
-        _call_x13_from_df(df=df, spec_folder=spec_folder,out_prefix=f"{outdir}",x13_bin=x13_bin)
+        df_seasonal = _call_x13_from_df(df=df, spec_folder=spec_folder,out_prefix=f"{outdir}",x13_bin=x13_bin)
 
 
     return df_seasonal
@@ -169,9 +196,11 @@ def main():
         }
     )
 
-    run_x13_from_df(df= df, spec_folder=str(MODULE_DIR),outdir=str(MODULE_DIR / "out"))
+    df2 = run_x13_from_df(df= df, spec_folder=str(MODULE_DIR / "test_spec"))
 
-    run_x13(spec=str(MODULE_DIR /"series"),outdir=str(MODULE_DIR / "out"))
+    print(df2)
+    
+    run_x13(spec=str(MODULE_DIR / "test_spec" / "series"),outdir=str(MODULE_DIR / "out"))
 
 if __name__=="__main__":
 
