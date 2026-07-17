@@ -22,9 +22,9 @@ def _call_x13(spec:str,out_prefix:str,x13_bin:str) -> None:
         text=True
     )
 
-    print("returncode:", result.returncode)
-    print("STDOUT:\n", result.stdout)
-    print("STDERR:\n", result.stderr)
+    # print("returncode:", result.returncode)
+    # print("STDOUT:\n", result.stdout)
+    # print("STDERR:\n", result.stderr)
 
     if result.returncode != 0:
         print("STDERR:", result.stderr)
@@ -78,6 +78,34 @@ def _insert_data(spec_text: str, data_line: str) -> str:
     return SERIES_BLOCK_PATTERN.sub(lambda m: f"{m.group(1)}\n{data_line}", spec_text, count=1)
 
 
+def _compute_start(s: pd.Series) -> str:
+    """
+    Returns the X-13 start= string (e.g. '2016.1') based on the first
+    non-null observation in the series, matching what _build_data_line
+    actually sends (since it drops NaNs).
+    """
+    valid = s.dropna()
+    if valid.empty:
+        raise ValueError("Series has no valid (non-NaN) observations")
+
+    first_date = pd.to_datetime(valid.index[0])
+
+    return f"{first_date.year}.{first_date.month}"
+
+
+START_LINE_PATTERN = re.compile(r"^\s*start\s*=\s*\S+\s*\n?", re.IGNORECASE | re.MULTILINE)
+
+def _set_start(spec_text: str, start: str) -> str:
+    spec_text = START_LINE_PATTERN.sub("", spec_text)
+    return re.sub(
+        r"(data\s*=\s*\([^)]*\))",   # <-- single closing paren now, not two
+        lambda m: f"{m.group(1)}\n    start = {start}",
+        spec_text,
+        count=1,
+        flags=re.DOTALL,
+    )
+
+
 def _read_saved_series(path: Path) -> pd.Series:
     df = pd.read_csv(
         path,
@@ -108,16 +136,21 @@ def _call_x13_from_df(df: pd.DataFrame, spec_folder:str, out_prefix:str,x13_bin:
 
 
     all_series = {}
+    i = 0
+    length = len(df.columns)
     
     for col in df.columns:
-
-        spec_path = Path(f"{spec_folder}/{col}.spc")
-        original_text = spec_path.read_text()
+        try:
+            spec_path = Path(f"{spec_folder}/{col}.spc")
+            original_text = spec_path.read_text()
+        except FileNotFoundError:
+            continue
 
         pd_series = df[col]
 
         try:
             modified_text = _insert_data(original_text, _build_data_line(pd_series))
+            modified_text = _set_start(modified_text, _compute_start(pd_series)) 
             spec_path.write_text(modified_text)
     
             
@@ -130,6 +163,12 @@ def _call_x13_from_df(df: pd.DataFrame, spec_folder:str, out_prefix:str,x13_bin:
         all_series[f"{col}_seasadj"] = _read_saved_series(f"{out_prefix}/{col}.d11")
         all_series[f"{col}_trend"] = _read_saved_series(f"{out_prefix}/{col}.d12")
         all_series[f"{col}_irregular"] = _read_saved_series(f"{out_prefix}/{col}.d13")
+
+        i+=1
+
+        if i % 100 == 0:
+            print(f"Seasonaly adjusted series {i} of {length}")
+        
 
     return pd.concat(all_series, axis=1)
 
@@ -170,38 +209,38 @@ def run_x13_from_df(df: pd.DataFrame, spec_folder: str, series: str = "x13", hmt
 
 
 
-def main():
+# def main():
 
 
-    df = pd.DataFrame(
-        {
-            "test_series":[
-    117.6321, 110.6025, 104.8950, 96.9695, 86.7018, 78.8318, 78.0121, 82.1642,
-    96.5159, 102.3555, 113.5752, 123.6357, 119.9755, 115.5377, 107.2848, 95.9743,
-    93.2637, 86.0345, 84.4102, 92.9304, 106.4474, 113.0026, 120.1865, 124.5225,
-    122.7044, 114.2969, 109.8878, 99.4937, 101.2351, 94.5265, 93.4225, 97.1657,
-    111.0839, 117.6951, 125.3150, 136.3268, 129.2745, 124.0235, 117.0190, 106.7959,
-    106.4826, 101.6068, 96.4737, 102.2382, 115.4476, 126.5961, 135.7104, 136.4260,
-    138.5409, 132.2199, 125.7574, 117.4867, 110.9020, 109.4147, 103.4894, 110.1698,
-    125.0512, 135.3186, 142.0268, 148.3604, 139.8691, 132.6253, 129.6352, 122.6646,
-    120.3349, 112.2253, 111.9255, 114.2364, 132.5346, 140.4152, 145.2409, 148.9917,
-    140.8448, 139.6680, 132.5025, 126.3962, 124.0231, 115.3350, 112.0360, 116.0306,
-    132.4485, 137.1384, 144.3527, 152.8708, 146.5735, 142.9108, 130.1298, 126.7866,
-    123.9890, 119.3467, 119.5382, 118.7328, 133.9700, 144.5159, 144.7231, 154.1961,
-    146.2567, 141.1788, 134.2238, 128.9506, 125.0671, 119.1353, 114.0103, 120.9332,
-    131.4628, 141.9426, 147.6159, 153.4491, 152.5089, 137.9397, 136.1164, 130.0892,
-    120.8811, 112.1872, 111.8570, 116.4022, 130.0293, 143.2727, 149.5855, 153.8786,
-    150.4865, 150.5271, 137.5098, 130.0893, 132.0464, 124.9229, 122.7883,
-]
-        }
-    )
+#     df = pd.DataFrame(
+#         {
+#             "test_series":[
+#     117.6321, 110.6025, 104.8950, 96.9695, 86.7018, 78.8318, 78.0121, 82.1642,
+#     96.5159, 102.3555, 113.5752, 123.6357, 119.9755, 115.5377, 107.2848, 95.9743,
+#     93.2637, 86.0345, 84.4102, 92.9304, 106.4474, 113.0026, 120.1865, 124.5225,
+#     122.7044, 114.2969, 109.8878, 99.4937, 101.2351, 94.5265, 93.4225, 97.1657,
+#     111.0839, 117.6951, 125.3150, 136.3268, 129.2745, 124.0235, 117.0190, 106.7959,
+#     106.4826, 101.6068, 96.4737, 102.2382, 115.4476, 126.5961, 135.7104, 136.4260,
+#     138.5409, 132.2199, 125.7574, 117.4867, 110.9020, 109.4147, 103.4894, 110.1698,
+#     125.0512, 135.3186, 142.0268, 148.3604, 139.8691, 132.6253, 129.6352, 122.6646,
+#     120.3349, 112.2253, 111.9255, 114.2364, 132.5346, 140.4152, 145.2409, 148.9917,
+#     140.8448, 139.6680, 132.5025, 126.3962, 124.0231, 115.3350, 112.0360, 116.0306,
+#     132.4485, 137.1384, 144.3527, 152.8708, 146.5735, 142.9108, 130.1298, 126.7866,
+#     123.9890, 119.3467, 119.5382, 118.7328, 133.9700, 144.5159, 144.7231, 154.1961,
+#     146.2567, 141.1788, 134.2238, 128.9506, 125.0671, 119.1353, 114.0103, 120.9332,
+#     131.4628, 141.9426, 147.6159, 153.4491, 152.5089, 137.9397, 136.1164, 130.0892,
+#     120.8811, 112.1872, 111.8570, 116.4022, 130.0293, 143.2727, 149.5855, 153.8786,
+#     150.4865, 150.5271, 137.5098, 130.0893, 132.0464, 124.9229, 122.7883,
+# ]
+#         }
+#     )
 
-    df2 = run_x13_from_df(df= df, spec_folder=str(MODULE_DIR / "test_spec"))
+#     df2 = run_x13_from_df(df= df, spec_folder=str(MODULE_DIR / "test_spec"))
 
-    print(df2)
+#     print(df2)
     
-    run_x13(spec=str(MODULE_DIR / "test_spec" / "series"),outdir=str(MODULE_DIR / "out"))
+#     run_x13(spec=str(MODULE_DIR / "test_spec" / "series"),outdir=str(MODULE_DIR / "out"))
 
-if __name__=="__main__":
+# if __name__=="__main__":
 
-    main()
+#     main()
