@@ -1,0 +1,35 @@
+open <acc rea> "<<TARGET_DB>>" as famedb
+
+freq m
+csv on, delimiter ";"
+over on
+
+replace nd null
+replace nc null
+replace na null
+  
+reset only item
+item class off, series on
+item index case off
+decimal auto
+
+image date "<year>-<pz>"
+
+open <kind text; access overwrite> file("<<OUTPUT_FILE>>") as output_csv
+
+loop for x in wildlist(famedb, "?")
+   write <crlf off> ";"+lower(name(x)) to output_csv
+end loop
+  write null to output_csv
+
+loop for s = <<START_DATE>> to <<END_DATE>>
+   write <crlf off> datefmt(s) to output_csv
+   loop for x in wildlist(famedb, "?")
+    write <crlf off> ";"+numfmt(x[s], *, @decimals) to output_csv
+   end loop
+   write null to output_csv
+  end loop
+
+
+
+type "ferdig"
