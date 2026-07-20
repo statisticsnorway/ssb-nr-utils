@@ -27,7 +27,12 @@ def get_fame(params:dict[str,str], famedb:str="sl-fame-1.ssb.no") -> None:
     Returns:
         None
     """
-    prog_path = Path("src/nr_utils/fame/fame_prog/lag_csv_template.inp")
+
+    MODULE_DIR = Path(__file__).resolve().parent
+
+    
+    
+    prog_path = Path(MODULE_DIR / "fame_prog" / "lag_csv_template.inp")
     original_script = prog_path.read_text()
     script = _inject_params(original_script, params)
 
