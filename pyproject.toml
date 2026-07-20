@@ -19,6 +19,9 @@ classifiers = [
 ]
 dependencies = [
     "click>=8.0.1",
+    "ipykernel>=7.3.0",
+    "matplotlib>=3.11.0",
+    "pandas>=3.0.3",
 ]
 
 [project.urls]
