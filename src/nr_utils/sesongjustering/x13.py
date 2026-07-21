@@ -160,9 +160,9 @@ def _call_x13_from_df(df: pd.DataFrame, spec_folder:str, out_prefix:str,x13_bin:
             spec_path.write_text(original_text)
         
         
-        all_series[f"{col}_seasadj"] = _read_saved_series(f"{out_prefix}/{col}.d11")
-        all_series[f"{col}_trend"] = _read_saved_series(f"{out_prefix}/{col}.d12")
-        all_series[f"{col}_irregular"] = _read_saved_series(f"{out_prefix}/{col}.d13")
+        all_series[f"{col}.s"] = _read_saved_series(f"{out_prefix}/{col}.d11")
+        all_series[f"{col}.t"] = _read_saved_series(f"{out_prefix}/{col}.d12")
+        all_series[f"{col}.i"] = _read_saved_series(f"{out_prefix}/{col}.d13")
 
         i+=1
 
