@@ -1,6 +1,5 @@
-
 freq <<FREQ>>
 date <<FROM_DATE>> to <<TO_DATE>>
-open <access <<ACCESS_MODE>>; kind db> file("<<DB_PATH>>") as <<MYDB>>
+open <access overwrite; kind db> file("<<DB_PATH>>") as <<MYDB>>
 <<SERIES_LINES>>
 close <<MYDB>>
