@@ -7,6 +7,31 @@ from pathlib import Path
 import pandas as pd
 
 
+
+def _run_fame_script(script: str, famedb: str) -> None:
+    with tempfile.TemporaryDirectory(prefix="fame_prog_nr_utils") as tmp:
+        spec_path = Path(tmp) / "run.inp"
+        spec_path.write_text(script)
+
+        try:
+            with open(spec_path, "r") as spec_file:
+                result = subprocess.run(
+                    ["ssh", famedb, "fame"],
+                    stdin=spec_file,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+        except OSError as e:
+            # ssh binary missing, permissions issue, etc.
+            raise RuntimeError(f"Failed to launch ssh: {e}") from e
+    
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"ssh/fame failed (exit code {result.returncode}): {result.stderr.strip()}"
+            )
+
+
 def _inject_params(script: str, params: dict[str, str]) -> str:
     """Function that puts in params in str obj of fame script."""
     for key, value in params.items():
@@ -72,15 +97,8 @@ def _update_series_lines(data: pd.DataFrame, db_alias: str) -> str:
     return "\n".join(lines)
 
 
-def _run_fame_script(script: str, famedb: str) -> None:
-    with tempfile.TemporaryDirectory(prefix="fame_prog_nr_utils") as tmp:
-        spec_path = Path(tmp) / "run.inp"
-        spec_path.write_text(script)
-        res = os.system(f"ssh {famedb} fame <{str(spec_path)}>>/dev/null")
-
-
 def create_fame_db(data: pd.DataFrame, freq: str, db_path: str, db_alias: str = "mydb",
-                    famedb: str = "sl-fame-1.ssb.no", precision: bool = True) -> None:
+                    famedb: str = "sl-fame-p1", precision: bool = True) -> None:
     """Create a brand-new FAME database and populate it with the given series.
 
     WARNING: uses ACCESS OVERWRITE, which replaces any existing file at

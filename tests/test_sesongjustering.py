@@ -8,8 +8,6 @@ import pandas as pd
 
 from nr_utils.sesongjustering.x13 import *
 
-print(os.getcwd())
-
 
 def test_sesongjustering():
     "If program returns df then run is succesfull"
