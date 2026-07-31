@@ -80,7 +80,7 @@ def _run_fame_script(script: str, famedb: str) -> None:
 
 
 def create_fame_db(data: pd.DataFrame, freq: str, db_path: str, db_alias: str = "mydb",
-                    famedb: str = "sl-fame-1.ssb.no", precision: bool = True) -> None:
+                    famedb: str = "sl-fame-p1", precision: bool = True) -> None:
     """Create a brand-new FAME database and populate it with the given series.
 
     WARNING: uses ACCESS OVERWRITE, which replaces any existing file at
