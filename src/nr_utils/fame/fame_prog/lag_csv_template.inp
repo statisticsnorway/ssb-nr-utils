@@ -1,6 +1,6 @@
 open <acc rea> "<<TARGET_DB>>" as famedb
 
-freq m
+freq <<FREQUENCY>>
 csv on, delimiter ";"
 over on
 
