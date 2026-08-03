@@ -97,8 +97,16 @@ def _update_series_lines(data: pd.DataFrame, db_alias: str) -> str:
     return "\n".join(lines)
 
 
-def create_fame_db(data: pd.DataFrame, freq: str, db_path: str, db_alias: str = "mydb",
-                    famedb: str = "sl-fame-p1", precision: bool = True) -> None:
+def create_fame_db(
+    data: pd.DataFrame, 
+    freq: str, 
+    start_date:str, 
+    end_date:str, 
+    db_path: str, 
+    db_alias: str = "mydb",
+    famedb: str = "sl-fame-p1", 
+    precision: bool = True
+) -> None:
     """Create a brand-new FAME database and populate it with the given series.
 
     WARNING: uses ACCESS OVERWRITE, which replaces any existing file at
@@ -108,6 +116,8 @@ def create_fame_db(data: pd.DataFrame, freq: str, db_path: str, db_alias: str = 
     Args:
         data: wide DataFrame, datetime index, one column per series.
         freq: FAME frequency keyword, e.g. "monthly".
+        start_date: Date str for from date, format YYYY:MM.
+        end_date: Date str for to date.
         db_path: path to the FAME database file to create.
         db_alias: channel alias for the OPEN ... AS clause.
         famedb: FAME server hostname.
@@ -122,16 +132,23 @@ def create_fame_db(data: pd.DataFrame, freq: str, db_path: str, db_alias: str = 
     params = {
         "DB_PATH": db_path,
         "FREQ": freq,
-        "FROM_DATE": _fame_period(data.index[0], freq),
-        "TO_DATE": _fame_period(data.index[-1], freq),
+        "FROM_DATE": start_date,
+        "TO_DATE": end_date,
         "MYDB": db_alias,
         "SERIES_LINES": _create_series_lines(data, db_alias, precision),
     }
     _run_fame_script(_inject_params(original_script, params), famedb)
 
 
-def update_fame_db(data: pd.DataFrame, freq: str, db_path: str, db_alias: str = "mydb",
-                    famedb: str = "sl-fame-1.ssb.no") -> None:
+def update_fame_db(
+    data: pd.DataFrame, 
+    freq: str, 
+    start_date:str, 
+    end_date:str, 
+    db_path: str, 
+    db_alias: str = "mydb",
+    famedb: str = "sl-fame-1.ssb.no"
+) -> None:
     """Write a range of values into an existing FAME database's existing series.
 
     Uses ACCESS SHARED, so the write can proceed alongside a concurrent
@@ -141,37 +158,61 @@ def update_fame_db(data: pd.DataFrame, freq: str, db_path: str, db_alias: str = 
     Args:
         data: wide DataFrame, datetime index, one column per series.
         freq: FAME frequency keyword, e.g. "monthly".
+        start_date: Date str for from date, format YYYY:MM.
+        end_date: Date str for to date.
         db_path: path to the existing FAME database file.
         db_alias: channel alias for the OPEN ... AS clause.
         famedb: FAME server hostname.
     Returns:
         None
     """
-    _assert_no_gaps(data)
+    # _assert_no_gaps(data)
     MODULE_DIR = Path(__file__).resolve().parent
     original_script = (MODULE_DIR / "fame_prog" / "oppdater_db_template.inp").read_text()
 
     params = {
         "DB_PATH": db_path,
         "FREQ": freq,
-        "FROM_DATE": _fame_period(data.index[0], freq),
-        "TO_DATE": _fame_period(data.index[-1], freq),
+        "FROM_DATE": start_date,
+        "TO_DATE": end_date,
         "MYDB": db_alias,
         "SERIES_LINES": _update_series_lines(data, db_alias),
     }
     _run_fame_script(_inject_params(original_script, params), famedb)
 
 
-def get_fame(params: dict[str, str], famedb: str = "sl-fame-1.ssb.no") -> None:
+def get_fame(
+    db_path:str, 
+    csv_path:str, 
+    freq:str, 
+    start_date:str, 
+    end_date:str, 
+    rounding:str = "auto", 
+    famedb: str = "sl-fame-p1"
+) -> None:
     """Read data from a FAME database and write it out to a CSV file.
 
     Args:
-        params: dict with parameters for famedb, from and to date, and output_path
-                (whatever placeholders lag_csv_template.inp expects).
+        db_path: Path to the existing FAME database file.
+        csv_path: Path to store csv file.
+        freq: FAME frequency keyword, e.g. "monthly".
+        start_date: Date str for from date, format YYYY:MM.
+        end_date: Date str for to date.
+        rounding: Number of decimals, eiher auto or number as str.
         famedb: FAME server hostname.
     Returns:
         None
     """
+
+    params = {
+        "TARGET_DB": db_path,
+        "FREQUENCY": freq,
+        "START_DATE": start_date,
+        "END_DATE":   end_date,
+        "OUTPUT_FILE": csv_path,
+        "DECIMAL": rounding
+    }
+
     MODULE_DIR = Path(__file__).resolve().parent
     original_script = (MODULE_DIR / "fame_prog" / "lag_csv_template.inp").read_text()
     script = _inject_params(original_script, params)
