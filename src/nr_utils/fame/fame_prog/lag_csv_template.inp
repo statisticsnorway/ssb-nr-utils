@@ -11,7 +11,7 @@ replace na null
 reset only item
 item class off, series on
 item index case off
-decimal auto
+decimal <<DECIMAL>>
 
 image date "<year>-<pz>"
 
