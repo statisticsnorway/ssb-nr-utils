@@ -1,11 +1,9 @@
 """Fame utility functions"""
-import os
-import re
+
 import subprocess
 import tempfile
 from pathlib import Path
 import pandas as pd
-
 
 
 def _run_fame_script(script: str, famedb: str) -> None:
@@ -25,7 +23,7 @@ def _run_fame_script(script: str, famedb: str) -> None:
         except OSError as e:
             # ssh binary missing, permissions issue, etc.
             raise RuntimeError(f"Failed to launch ssh: {e}") from e
-    
+
         if result.returncode != 0:
             raise RuntimeError(
                 f"ssh/fame failed (exit code {result.returncode}): {result.stderr.strip()}"
@@ -58,11 +56,17 @@ def _fame_period(date: pd.Timestamp, freq: str) -> str:
 
 def _assert_no_gaps(data: pd.DataFrame) -> None:
     """Guard against silent value-list misalignment from a gapped index."""
-    expected = pd.date_range(data.index[0], data.index[-1], freq=data.index.freq or "MS")
-    assert data.index.equals(expected), "gaps detected in data.index -- would misalign value-list"
+    expected = pd.date_range(
+        data.index[0], data.index[-1], freq=data.index.freq or "MS"
+    )
+    assert data.index.equals(
+        expected
+    ), "gaps detected in data.index -- would misalign value-list"
 
 
-def _create_series_lines(data: pd.DataFrame, db_alias: str, precision: bool = True) -> str:
+def _create_series_lines(
+    data: pd.DataFrame, db_alias: str, precision: bool = True
+) -> str:
     """Build one SERIES statement per column, creating and populating each object.
 
     Args:
@@ -98,14 +102,14 @@ def _update_series_lines(data: pd.DataFrame, db_alias: str) -> str:
 
 
 def create_fame_db(
-    data: pd.DataFrame, 
-    freq: str, 
-    start_date:str, 
-    end_date:str, 
-    db_path: str, 
+    data: pd.DataFrame,
+    freq: str,
+    start_date: str,
+    end_date: str,
+    db_path: str,
     db_alias: str = "mydb",
-    famedb: str = "sl-fame-p1", 
-    precision: bool = True
+    famedb: str = "sl-fame-p1",
+    precision: bool = True,
 ) -> None:
     """Create a brand-new FAME database and populate it with the given series.
 
@@ -141,13 +145,13 @@ def create_fame_db(
 
 
 def update_fame_db(
-    data: pd.DataFrame, 
-    freq: str, 
-    start_date:str, 
-    end_date:str, 
-    db_path: str, 
+    data: pd.DataFrame,
+    freq: str,
+    start_date: str,
+    end_date: str,
+    db_path: str,
     db_alias: str = "mydb",
-    famedb: str = "sl-fame-1.ssb.no"
+    famedb: str = "sl-fame-1.ssb.no",
 ) -> None:
     """Write a range of values into an existing FAME database's existing series.
 
@@ -168,7 +172,9 @@ def update_fame_db(
     """
     # _assert_no_gaps(data)
     MODULE_DIR = Path(__file__).resolve().parent
-    original_script = (MODULE_DIR / "fame_prog" / "oppdater_db_template.inp").read_text()
+    original_script = (
+        MODULE_DIR / "fame_prog" / "oppdater_db_template.inp"
+    ).read_text()
 
     params = {
         "DB_PATH": db_path,
@@ -182,13 +188,13 @@ def update_fame_db(
 
 
 def get_fame(
-    db_path:str, 
-    csv_path:str, 
-    freq:str, 
-    start_date:str, 
-    end_date:str, 
-    rounding:str = "auto", 
-    famedb: str = "sl-fame-p1"
+    db_path: str,
+    csv_path: str,
+    freq: str,
+    start_date: str,
+    end_date: str,
+    rounding: str = "auto",
+    famedb: str = "sl-fame-p1",
 ) -> None:
     """Read data from a FAME database and write it out to a CSV file.
 
@@ -208,9 +214,9 @@ def get_fame(
         "TARGET_DB": db_path,
         "FREQUENCY": freq,
         "START_DATE": start_date,
-        "END_DATE":   end_date,
+        "END_DATE": end_date,
         "OUTPUT_FILE": csv_path,
-        "DECIMAL": rounding
+        "DECIMAL": rounding,
     }
 
     MODULE_DIR = Path(__file__).resolve().parent
