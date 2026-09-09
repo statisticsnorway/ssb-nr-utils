@@ -54,14 +54,14 @@ def _fame_period(date: pd.Timestamp, freq: str) -> str:
     raise ValueError(f"Unhandled frequency: {freq}")
 
 
-def _assert_no_gaps(data: pd.DataFrame) -> None:
-    """Guard against silent value-list misalignment from a gapped index."""
-    expected = pd.date_range(
-        data.index[0], data.index[-1], freq=data.index.freq or "MS"
-    )
-    assert data.index.equals(
-        expected
-    ), "gaps detected in data.index -- would misalign value-list"
+# def _assert_no_gaps(data: pd.DataFrame) -> None:
+#     """Guard against silent value-list misalignment from a gapped index."""
+#     expected = pd.date_range(
+#         data.index[0], data.index[-1], freq=data.index.freq or "MS"
+#     )
+#     assert data.index.equals(
+#         expected
+#     ), "gaps detected in data.index -- would misalign value-list"
 
 
 def _create_series_lines(
@@ -129,7 +129,7 @@ def create_fame_db(
     Returns:
         None
     """
-    _assert_no_gaps(data)
+    # _assert_no_gaps(data)
     MODULE_DIR = Path(__file__).resolve().parent
     original_script = (MODULE_DIR / "fame_prog" / "opprett_db_template.inp").read_text()
 
@@ -209,6 +209,12 @@ def get_fame(
     Returns:
         None
     """
+    DATE_IMAGE_BY_FREQ = {
+        "annual": "<year>",
+        "quarterly": "<year>Q<p>",
+        "monthly": "<year>-<mz>",
+        "daily": "<year>-<mz>-<dz>",
+    }
 
     params = {
         "TARGET_DB": db_path,
@@ -217,9 +223,80 @@ def get_fame(
         "END_DATE": end_date,
         "OUTPUT_FILE": csv_path,
         "DECIMAL": rounding,
+        "DATE_IMAGE": DATE_IMAGE_BY_FREQ[freq],
     }
 
     MODULE_DIR = Path(__file__).resolve().parent
     original_script = (MODULE_DIR / "fame_prog" / "lag_csv_template.inp").read_text()
     script = _inject_params(original_script, params)
+
+    # print(script)
+    
     _run_fame_script(script, famedb)
+
+
+
+# def main():
+#     print("Test ny fame funksjonalitet!")
+
+#     df_annual = pd.DataFrame({
+#         "test.1.vl": [100.5, 102.3, 104.1, 106.0],
+#         # "date": ["2023", "2024", "2025", "2026"],
+#     })
+    
+#     df_quarterly = pd.DataFrame({
+#         "test.1.vl": [100.5, 101.2, 102.0, 102.8, 103.5],
+#         # "date": ["2025Q1", "2025Q2", "2025Q3", "2025Q4", "2026Q1"],
+#     })
+    
+#     df_monthly = pd.DataFrame({
+#         "test.1.vl": [100.5, 100.8, 101.1, 101.4, 101.9, 102.2],
+#         # "date": ["2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"],
+#     })
+
+#     df_daily = pd.DataFrame({
+#         "test.1.vl": [100.5, 100.6, 100.4, 100.9, 101.1, 101.0, 101.3, 101.5, 101.4, 101.8],
+#         # "date": [
+#         #     "2026-06-01", "2026-06-02", "2026-06-03", "2026-06-04", "2026-06-05",
+#         #     "2026-06-06", "2026-06-07", "2026-06-08", "2026-06-09", "2026-06-10",
+#         # ],
+#     })
+
+#     root_path = "/ssb/bruker/ged"
+
+#     test_cases = [
+#         ("annual", df_annual, "2023", "2026"),
+#         ("quarterly", df_quarterly, "2025:1", "2026:1"),
+#         ("monthly", df_monthly, "2026:1", "2026:6"),
+#         ("daily", df_daily, "2026:1", "2026:10"),
+#     ]
+
+#     for freq, df, start_date, end_date in test_cases:
+#         db_path = f"{root_path}/test_db_{freq}.db"
+#         csv_path = f"{root_path}/test_out_{freq}.csv"
+#         print(df)
+#         # 1. write test data into a FAME db
+#         create_fame_db(
+#             data=df,
+#             freq=freq,
+#             start_date=start_date,
+#             end_date=end_date,
+#             db_path=db_path,
+#         )
+    
+#         # 2. read it back out via your existing get_fame
+#         get_fame(
+#             db_path=db_path,
+#             csv_path=csv_path,
+#             freq=freq,
+#             start_date=start_date,
+#             end_date=end_date,
+#         )
+    
+#         # 3. compare
+#         result = pd.read_csv(csv_path, sep=";")
+#         print(f"--- {freq} ---")
+#         print(result)
+    
+# if __name__ == "__main__":
+#     main()

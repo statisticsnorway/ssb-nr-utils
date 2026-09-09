@@ -13,7 +13,7 @@ item class off, series on
 item index case off
 decimal <<DECIMAL>>
 
-image date "<year>-<pz>"
+image date <<DATE_IMAGE>>
 
 open <kind text; access overwrite> file("<<OUTPUT_FILE>>") as output_csv
 
@@ -23,7 +23,7 @@ end loop
   write null to output_csv
 
 loop for s = <<START_DATE>> to <<END_DATE>>
-   write <crlf off> datefmt(s) to output_csv
+   write <crlf off> datefmt(s, "<<DATE_IMAGE>>") to output_csv
    loop for x in wildlist(famedb, "?")
     write <crlf off> ";"+numfmt(x[s], *, @decimals) to output_csv
    end loop
