@@ -262,7 +262,9 @@ def get_fame(
 #         # ],
 #     })
 
-#     root_path = "/ssb/bruker/ged"
+#     print("Skriv inn brukernavn:")
+#     user = input()
+#     root_path = f"/ssb/bruker/{user}"
 
 #     test_cases = [
 #         ("annual", df_annual, "2023", "2026"),
