@@ -176,3 +176,4 @@ __marimo__/
 *.rej
 *.orig
 src/nr_utils/sesongjustering/out
+examples/sesongjustering/test_spc/
