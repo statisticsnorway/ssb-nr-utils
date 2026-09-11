@@ -1,10 +1,8 @@
+
 Series {
+    title="47.1.u"
     period=12
-    start=2016.1
-    title="observed"
-}
-Transform {
-    function=log
+    start=2000.1
 }
 Arima {
     model=(0,1,1)(0,1,1)

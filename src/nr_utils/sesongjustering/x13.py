@@ -184,21 +184,19 @@ def _call_x13_from_df(
 def run_x13_from_df(
     df: pd.DataFrame,
     spec_folder: str,
-    series: str = "x13",
     hmtl: bool = False,
     outdir: str = None,
-):
+)->pd.DataFrame:
     """Function to run the x13 binary file.
 
     Args:
         df: Pandas df with data to adjust.
         spec: Path to spec.
-        series: name for series.
         html: Bool of wether or not to run the html version, default false.
         outdir: Dir for temp output from the x13 run.
 
     Returns:
-        None
+        pd.DataFrame
     """
     if hmtl:
         x13_bin = MODULE_DIR / "bin" / "x13as_html"
