@@ -1,6 +1,6 @@
 [project]
 name = "ssb-nr-utils"
-version = "0.0.1"
+version = "0.0.2"
 description = "SSB Nr Utils"
 authors = [{ name = "Edvard Garmannslund", email = "ged@ssb.no" }]
 maintainers = [{ name = "Statistics Norway, National accounts Department (210)" }]
@@ -21,7 +21,11 @@ dependencies = [
     "click>=8.0.1",
     "ipykernel>=7.3.0",
     "matplotlib>=3.11.0",
+    "nbformat>=5.11.1",
     "pandas>=3.0.3",
+    "plotly>=7.0.0",
+    "pyjstat>=2.4.0",
+    "statsmodels>=0.15.0",
 ]
 
 [project.urls]
@@ -56,6 +60,7 @@ dev = [
     {include-group = "doc"},
     "coverage[toml]>=7.11.3",
     "deptry>=0.24.0; python_version < '4.0'",
+    "ipykernel>=7.3.0",
     "mypy>=1.18.2",
     "pygments>=2.19.0",
     "pytest>=9.0.0",
