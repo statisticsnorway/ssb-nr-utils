@@ -1,6 +1,6 @@
 [project]
 name = "ssb-nr-utils"
-version = "0.0.2"
+version = "0.0.3"
 description = "SSB Nr Utils"
 authors = [{ name = "Edvard Garmannslund", email = "ged@ssb.no" }]
 maintainers = [{ name = "Statistics Norway, National accounts Department (210)" }]
