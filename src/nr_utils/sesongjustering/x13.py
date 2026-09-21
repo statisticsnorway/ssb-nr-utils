@@ -138,6 +138,14 @@ def _read_saved_series(path: Path) -> pd.Series:
     return pd.Series(values.values, index=idx)
 
 
+def _get_saved_series_names(text:str):
+    """Gets name of saved series from spc file."""
+    match = re.search(r'save\s*=\s*\(([^)]*)\)', text)
+    if not match:
+        return []
+    return match.group(1).split()
+
+
 def _call_x13_from_df(
     df: pd.DataFrame, spec_folder: str, out_prefix: str, x13_bin: str
 ) -> pd.DataFrame:
@@ -156,8 +164,11 @@ def _call_x13_from_df(
         pd_series = df[col]
 
         try:
+            #Inserts data to spc file since x13 can not read data from pandas df.
             modified_text = _insert_data(original_text, _build_data_line(pd_series))
+            #Not all data starts at the same point, we ned to therefore define a start point based on the data.
             modified_text = _set_start(modified_text, _compute_start(pd_series))
+            #Write modifie text to spc folder.
             spec_path.write_text(modified_text)
 
             _call_x13(
@@ -169,21 +180,24 @@ def _call_x13_from_df(
         finally:
             spec_path.write_text(original_text)
 
-        all_series[f"{col}.s"] = _read_saved_series(f"{out_prefix}/{col}.d11")
-        all_series[f"{col}.t"] = _read_saved_series(f"{out_prefix}/{col}.d12")
-        all_series[f"{col}.i"] = _read_saved_series(f"{out_prefix}/{col}.d13")
+
+        saved_series_names = _get_saved_series_names(original_text)
+
+        for series in saved_series_names:
+            all_series[f"{col}.{series}"] = _read_saved_series(f"{out_prefix}/{col}.{series}")
 
         i += 1
 
         if i % 100 == 0:
             print(f"Seasonaly adjusted series {i} of {length}")
-
+            
     return pd.concat(all_series, axis=1)
 
 
 def run_x13_from_df(
     df: pd.DataFrame,
     spec_folder: str,
+    x13_suffix: bool = False,
     hmtl: bool = False,
     outdir: str = None,
 )->pd.DataFrame:
@@ -191,7 +205,8 @@ def run_x13_from_df(
 
     Args:
         df: Pandas df with data to adjust.
-        spec: Path to spec.
+        spec_folder: Path to spec.
+        x13_suffix: Bool of wether or not to use x13 own suffix or basic s,t and irr, default is False.
         html: Bool of wether or not to run the html version, default false.
         outdir: Dir for temp output from the x13 run.
 
@@ -216,5 +231,10 @@ def run_x13_from_df(
         df_seasonal = _call_x13_from_df(
             df=df, spec_folder=spec_folder, out_prefix=f"{outdir}", x13_bin=x13_bin
         )
+
+    if x13_suffix is False:
+        df_seasonal.columns = df_seasonal.columns.str.replace('d11$', 's', regex=True)
+        df_seasonal.columns = df_seasonal.columns.str.replace('d12$', 't', regex=True)
+        df_seasonal.columns = df_seasonal.columns.str.replace('d13$', 'irr', regex=True)
 
     return df_seasonal
