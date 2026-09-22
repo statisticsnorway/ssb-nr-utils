@@ -138,12 +138,21 @@ def _read_saved_series(path: Path) -> pd.Series:
     return pd.Series(values.values, index=idx)
 
 
-def _get_saved_series_names(text:str):
-    """Gets name of saved series from spc file."""
-    match = re.search(r'save\s*=\s*\(([^)]*)\)', text)
-    if not match:
+X11_BLOCK_PATTERN = re.compile(r"x11\s*\{(.*?)\}", re.IGNORECASE | re.DOTALL)
+SAVE_PATTERN = re.compile(r"save\s*=\s*\(([^)]*)\)", re.IGNORECASE)
+
+
+def _get_saved_series_names(text: str) -> list[str]:
+    """Gets name of saved series from the x11{} block of an spc file."""
+    block_match = X11_BLOCK_PATTERN.search(text)
+    if not block_match:
         return []
-    return match.group(1).split()
+
+    save_match = SAVE_PATTERN.search(block_match.group(1))
+    if not save_match:
+        return []
+
+    return save_match.group(1).split()
 
 
 def _call_x13_from_df(
