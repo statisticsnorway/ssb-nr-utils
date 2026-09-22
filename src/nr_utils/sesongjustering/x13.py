@@ -189,11 +189,15 @@ def _call_x13_from_df(
         finally:
             spec_path.write_text(original_text)
 
-
+        #Henter serier vi har lagret
         saved_series_names = _get_saved_series_names(original_text)
-
+        #LAgrer alle serier i df
         for series in saved_series_names:
-            all_series[f"{col}.{series}"] = _read_saved_series(f"{out_prefix}/{col}.{series}")
+            try:
+                all_series[f"{col}.{series}"] = _read_saved_series(f"{out_prefix}/{col}.{series}")
+            #Dersom det mangler en fil hopper vi videre til neste. Gjelder blandt annet om vi ønsket å lagre virkedagseffekter men vi virkedagskorrigerte ikke. Da må vi hoppe videre til neste.
+            except FileNotFoundError:
+                continue
 
         i += 1
 
