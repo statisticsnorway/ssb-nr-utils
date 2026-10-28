@@ -80,7 +80,7 @@ def _create_series_lines(
     type_clause = ":precision" if precision else ":numeric"
     lines = []
     for name in data.columns:
-        values = ", ".join(f"{v:g}" for v in data[name])
+        values = ", ".join(f"{v:.15g}" for v in data[name])
         lines.append(f"series {name} {type_clause} indexed by date = {values}")
     return "\n".join(lines)
 
@@ -96,7 +96,7 @@ def _update_series_lines(data: pd.DataFrame, db_alias: str) -> str:
     """
     lines = []
     for name in data.columns:
-        values = ", ".join(f"{v:g}" for v in data[name])
+        values = ", ".join(f"{v:.15g}" for v in data[name])
         lines.append(f"update {name} = {values}")
     return "\n".join(lines)
 
