@@ -9,7 +9,7 @@ replace nc null
 replace na null
 
 reset only item
-item class off, series on
+item class off, series on, formula on
 item index case off
 decimal <<DECIMAL>>
 
